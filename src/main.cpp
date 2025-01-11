@@ -1,3 +1,36 @@
+#include <WiFi.h>
+#include <WebServer.h>
+
+const char *ssid = "ESP32_AP";
+const char *password = "12345678"; // Minimum 8 characters
+
+// Set up a WebServer on port 80
+WebServer server(80);
+
+// HTML content for the webpage
+const char htmlPage[] = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP32 Web Server</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; }
+    h1 { color: #005f5f; }
+  </style>
+</head>
+<body>
+  <h1>ESP32 Web Server</h1>
+  <p>Welcome to your first ESP32 webpage!</p>
+</body>
+</html>
+)rawliteral";
+
+// Handle root URL
+void handleRoot()
+{
+  server.send(200, "text/html", htmlPage);
+}
+
 #include <Arduino.h>
 #include "HX711.h"
 #include "soc/rtc.h"
@@ -63,6 +96,8 @@ double waitForStableWeight(unsigned long timeout = 5000, double stabilityThresho
 
   while (true)
   {
+
+    server.handleClient();
     weight = getWeight();
     if (abs(weight - previousWeight) <= stabilityThreshold && weight > 20)
     {
@@ -102,10 +137,25 @@ void setup()
   display.setTextColor(WHITE);
   display.clearDisplay();
   display.display();
+
+  Serial.println("Setting up Access Point...");
+  WiFi.softAP(ssid, password);
+
+  // Print IP address of the Access Point
+  Serial.println("Access Point set up!");
+  Serial.print("AP IP Address: ");
+  Serial.println(WiFi.softAPIP());
+
+  // Start the web server
+  server.on("/", handleRoot);
+  server.begin();
+  Serial.println("Web server started.");
 }
 
 void loop()
 {
+  server.handleClient();
+
   unsigned long now = millis();
 
   if (now - lastWeightRead >= 100)
@@ -161,6 +211,7 @@ void loop()
 
     while (getWeight() > 50)
     {
+      server.handleClient();
       delay(100);
     }
 
