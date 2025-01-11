@@ -1,42 +1,11 @@
-#include <WiFi.h>
-#include <WebServer.h>
-
-const char *ssid = "ESP32_AP";
-const char *password = "12345678"; // Minimum 8 characters
-
-// Set up a WebServer on port 80
-WebServer server(80);
-
-// HTML content for the webpage
-const char htmlPage[] = R"rawliteral(
-<!DOCTYPE html>
-<html>
-<head>
-  <title>ESP32 Web Server</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; }
-    h1 { color: #005f5f; }
-  </style>
-</head>
-<body>
-  <h1>ESP32 Web Server</h1>
-  <p>Welcome to your first ESP32 webpage!</p>
-</body>
-</html>
-)rawliteral";
-
-// Handle root URL
-void handleRoot()
-{
-  server.send(200, "text/html", htmlPage);
-}
-
 #include <Arduino.h>
 #include "HX711.h"
 #include "soc/rtc.h"
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <WiFi.h>
+#include <WebServer.h>
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
@@ -64,6 +33,21 @@ unsigned long timer = 0;
 double weight = 0;
 unsigned long lastWeightRead = 0;
 unsigned long lastDisplayUpdate = 0;
+
+const char *ssid = "ESP32_AP";
+const char *password = "12345678"; // Minimum 8 characters
+WebServer server(80);
+
+String resultsHTML = "";
+
+void handleRoot()
+{
+  String html = "<!DOCTYPE html><html><head><title>Drink Tracker</title></head><body>";
+  html += "<h1>Drink Tracker Results</h1>";
+  html += resultsHTML;
+  html += "</body></html>";
+  server.send(200, "text/html", html);
+}
 
 double getWeight()
 {
@@ -96,7 +80,6 @@ double waitForStableWeight(unsigned long timeout = 5000, double stabilityThresho
 
   while (true)
   {
-
     server.handleClient();
     weight = getWeight();
     if (abs(weight - previousWeight) <= stabilityThreshold && weight > 20)
@@ -208,6 +191,8 @@ void loop()
     display.print(drunkWeight / 1000.0, 2);
     display.print("l");
     display.display();
+
+    resultsHTML += "<p>Time: " + String(timer / 1000.0, 1) + " s, Drunk: " + String(drunkWeight / 1000.0, 2) + " l</p>\n";
 
     while (getWeight() > 50)
     {
