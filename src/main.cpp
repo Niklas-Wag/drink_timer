@@ -6,6 +6,7 @@
 #include <Adafruit_SSD1306.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <SPIFFS.h>
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
@@ -38,16 +39,67 @@ const char *ssid = "ESP32_AP";
 const char *password = "12345678"; // Minimum 8 characters
 WebServer server(80);
 
-String resultsHTML = "";
+void addEntry(String name, int time, int quantity)
+{
+  File file = SPIFFS.open("/leaderboard.txt", FILE_APPEND);
+  if (!file)
+  {
+    Serial.println("Fehler beim Öffnen der Datei.");
+    return;
+  }
+  file.println(name + "," + String(time) + "," + String(quantity));
+  file.close();
+}
 
 void handleRoot()
 {
-  String html = "<!DOCTYPE html><html><head><title>Drink Tracker</title></head><body>";
-  html += "<h1>Drink Tracker Results</h1>";
-  html += resultsHTML;
+  String leaderHTML;
+  String html = "<!DOCTYPE html><html><head><title>Drink Tracker</title>";
+  html += "<style>";
+  html += "body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }";
+  html += "h1 { text-align: center; color: #4CAF50; }";
+  html += "table { width: 100%; border-collapse: collapse; margin: 20px 0; }";
+  html += "th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }";
+  html += "th { background-color: #4CAF50; color: white; }";
+  html += "tr:hover { background-color: #f1f1f1; }";
+  html += "</style>";
+  html += "</head><body>";
+  html += "<h1>Sauf Board</h1>";
+
+  // Build the table structure
+  html += "<table>";
+  html += "<tr><th>Name</th><th>Time</th><th>Quantity</th></tr>";
+
+  File file = SPIFFS.open("/leaderboard.txt", FILE_READ);
+  if (!file)
+  {
+    Serial.println("Fehler beim Lesen der Datei.");
+    return;
+  }
+
+  // Populate the table rows with data
+  while (file.available())
+  {
+    String line = file.readStringUntil('\n');
+    int comma1 = line.indexOf(',');
+    int comma2 = line.lastIndexOf(',');
+
+    if (comma1 > 0 && comma2 > comma1) {
+      String name = line.substring(0, comma1);
+      String time = line.substring(comma1 + 1, comma2);
+      String quantity = line.substring(comma2 + 1);
+      leaderHTML += "<tr><td>" + name + "</td><td>" + time + "</td><td>" + quantity + "</td></tr>";
+    }
+  }
+  file.close();
+
+  html += leaderHTML;
+  html += "</table>";
   html += "</body></html>";
+
   server.send(200, "text/html", html);
 }
+
 
 double getWeight()
 {
@@ -121,18 +173,16 @@ void setup()
   display.clearDisplay();
   display.display();
 
-  Serial.println("Setting up Access Point...");
+  if (!SPIFFS.begin(true))
+  {
+    Serial.println("SPIFFS Initialisierung fehlgeschlagen!");
+    return;
+  }
+
   WiFi.softAP(ssid, password);
 
-  // Print IP address of the Access Point
-  Serial.println("Access Point set up!");
-  Serial.print("AP IP Address: ");
-  Serial.println(WiFi.softAPIP());
-
-  // Start the web server
   server.on("/", handleRoot);
   server.begin();
-  Serial.println("Web server started.");
 }
 
 void loop()
@@ -192,7 +242,7 @@ void loop()
     display.print("l");
     display.display();
 
-    resultsHTML += "<p>Time: " + String(timer / 1000.0, 1) + " s, Drunk: " + String(drunkWeight / 1000.0, 2) + " l</p>\n";
+    addEntry("Player", timer, drunkWeight);
 
     while (getWeight() > 50)
     {
