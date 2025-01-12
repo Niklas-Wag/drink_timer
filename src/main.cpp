@@ -10,11 +10,11 @@ void setup()
 
   setupScale();
   setupDisplay();
-  // setupServer();
+  setupServer();
 }
 
 void loop()
 {
-  // serverHandleClient();
+  serverHandleClient();
   gameLoop();
 }

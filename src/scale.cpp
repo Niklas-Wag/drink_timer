@@ -1,5 +1,6 @@
 #include "scale.h"
 #include "HX711.h"
+#include "server.h"
 
 #define LOADCELL_DOUT_PIN 16
 #define LOADCELL_SCK_PIN 17
@@ -28,6 +29,9 @@ double waitForStableWeight(unsigned long timeout, double stabilityThreshold)
 
     while (true)
     {
+        // quick hack to keep the server running
+        serverHandleClient();
+
         weight = getWeight();
         if (abs(weight - previousWeight) <= stabilityThreshold && weight > 20)
         {

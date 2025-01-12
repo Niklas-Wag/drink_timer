@@ -54,6 +54,7 @@ void gameLoop()
         if (weight < 50)
         {
             currentState = WAIT_FOR_GLASS;
+            drunkWeight = -1;
         }
         break;
     }
