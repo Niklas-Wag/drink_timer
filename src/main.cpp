@@ -3,6 +3,7 @@
 #include "scale.h"
 #include "server.h"
 #include "game.h"
+#include "playerSelection.h"
 
 void setup()
 {
@@ -11,6 +12,7 @@ void setup()
   setupScale();
   setupDisplay();
   setupServer();
+  setupRotary();
 }
 
 void loop()
