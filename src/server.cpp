@@ -4,7 +4,7 @@
 
 WebServer server(80);
 
-String generateLeaderboard(int minML, int maxML)
+String generateLeaderboard(double minL, double maxL)
 {
     File file = SPIFFS.open("/leaderboard.txt", FILE_READ);
     if (!file)
@@ -40,7 +40,7 @@ String generateLeaderboard(int minML, int maxML)
         double seconds = line.substring(comma1 + 1, comma2).toDouble() / 1000.0;
         double liters = line.substring(comma2 + 1).toDouble() / 1000.0;
 
-        if (liters >= minML && liters <= maxML && seconds > 0)
+        if (liters >= minL && liters <= maxL && seconds > 0)
         {
             float lPerS = (float)liters / seconds;
             entries.push_back({name, liters, seconds, lPerS});
@@ -84,11 +84,11 @@ void handleRoot()
     html += "</head><body>";
     html += "<h1>Sauf Tracker</h1>";
 
-    html += "<h2>(250-350ml)</h2>";
-    html += generateLeaderboard(250, 350);
+    html += "<h2>0.25 - 0.35 L</h2>";
+    html += generateLeaderboard(0.25, 0.35);
 
-    html += "<h2>(450-550ml)</h2>";
-    html += generateLeaderboard(450, 550);
+    html += "<h2>0.45 - 0.55 L</h2>";
+    html += generateLeaderboard(0.45, 0.55);
 
     html += "<h2>Other</h2>";
     html += generateLeaderboard(0, 1000000);

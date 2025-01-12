@@ -49,7 +49,10 @@ void gameLoop()
             displayTimeResults(timer / 1000.0);
             drunkWeight = initialWeight - waitForStableWeight();
             displayVolumeResults(drunkWeight / 1000.0);
-            addEntry("Player", timer, drunkWeight);
+            if (drunkWeight > 5)
+            {
+                addEntry("Player", timer, drunkWeight);
+            }
         }
         if (weight < 50)
         {
