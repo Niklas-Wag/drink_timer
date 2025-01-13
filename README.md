@@ -1,28 +1,22 @@
-
-## Boards and Connections
-
 ### ESP32 Board
 
 - **Board:** Denky32
 - **Platform:** espressif32
 - **Framework:** arduino
 
-### Connections
-
-#### Rotary Encoder
+### Rotary Encoder
 
 - **CLK_PIN:** GPIO 19
 - **DT_PIN:** GPIO 18
 - **SW_PIN:** GPIO 5
 
-#### OLED Display
+### OLED Display
 
 - **SDA:** GPIO 21
 - **SCL:** GPIO 22
 
-### Other Components
 
-- **HX711 Load Cell Amplifier**
+### HX711 Load Cell Amplifier
   - **DT:** GPIO 4
   - **SCK:** GPIO 16
 
