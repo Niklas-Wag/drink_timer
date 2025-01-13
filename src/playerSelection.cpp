@@ -6,23 +6,23 @@
 #define CLK_PIN 19
 #define DT_PIN 18
 #define SW_PIN 5
-#define DEBOUNCE_DELAY 50 // 50 milliseconds debounce delay
+#define DEBOUNCE_DELAY 50
 
+RotaryEncoder encoder(CLK_PIN, DT_PIN, RotaryEncoder::LatchMode::FOUR3);
 
-RotaryEncoder encoder(CLK_PIN, DT_PIN);
-
-const char *names[] = {"Guest", "Bob", "Charlie", "Diana", "Eve"};
+const char *names[] = {"Guest", "Julia", "Niklas", "Xaver"};
 const int namesCount = sizeof(names) / sizeof(names[0]);
 int currentIndex = 0;
 
 void displayCurrentName()
 {
-    displayText(names[currentIndex]);
+    displayMultipleTexts({"Player:", names[currentIndex]});
 }
 
 void setupRotary()
 {
     pinMode(SW_PIN, INPUT_PULLUP);
+    encoder.setPosition(0);
 }
 
 String getPlayer()

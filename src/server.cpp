@@ -9,7 +9,7 @@ String generateLeaderboard(double minL, double maxL)
     File file = SPIFFS.open("/leaderboard.txt", FILE_READ);
     if (!file)
     {
-        Serial.println("Error opening file.");
+        Serial.println("Error opening leaderboard file.");
         return "<p>Error loading leaderboard.</p>";
     }
 
@@ -52,48 +52,36 @@ String generateLeaderboard(double minL, double maxL)
     std::sort(entries.begin(), entries.end(), [](const Entry &a, const Entry &b)
               { return a.lPerS > b.lPerS; });
 
-    String table = "<table>";
-    table += "<tr><th>Player</th><th>liter</th><th>s</th><th>l/s</th></tr>";
-
+    String tableRows;
     for (const auto &entry : entries)
     {
-        table += "<tr>";
-        table += "<td>" + entry.name + "</td>";
-        table += "<td>" + String(entry.liters) + "</td>";
-        table += "<td>" + String(entry.time) + "</td>";
-        table += "<td>" + String(entry.lPerS, 2) + "</td>";
-        table += "</tr>";
+        tableRows += "<tr>";
+        tableRows += "<td>" + entry.name + "</td>";
+        tableRows += "<td>" + String(entry.liters) + "</td>";
+        tableRows += "<td>" + String(entry.time) + "</td>";
+        tableRows += "<td>" + String(entry.lPerS, 2) + "</td>";
+        tableRows += "</tr>";
     }
 
-    table += "</table>";
-
-    return table;
+    return tableRows;
 }
 
 void handleRoot()
 {
-    String html = "<!DOCTYPE html><html><head><title>Sauf Tracker</title>";
-    html += "<style>";
-    html += "body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }";
-    html += "h1 { text-align: center; color: #4CAF50; }";
-    html += "table { width: 100%; border-collapse: collapse; margin: 20px 0; }";
-    html += "th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }";
-    html += "th { background-color: #4CAF50; color: white; }";
-    html += "tr:hover { background-color: #f1f1f1; }";
-    html += "</style>";
-    html += "</head><body>";
-    html += "<h1>Sauf Tracker</h1>";
+    File file = SPIFFS.open("/index.html", FILE_READ);
+    if (!file)
+    {
+        Serial.println("Error opening index.html file.");
+        server.send(500, "text/plain", "Internal Server Error: Unable to load page.");
+        return;
+    }
 
-    html += "<h2>0.25 - 0.35 L</h2>";
-    html += generateLeaderboard(0.25, 0.35);
+    String html = file.readString();
+    file.close();
 
-    html += "<h2>0.45 - 0.55 L</h2>";
-    html += generateLeaderboard(0.45, 0.55);
-
-    html += "<h2>Other</h2>";
-    html += generateLeaderboard(0, 1000000);
-
-    html += "</body></html>";
+    html.replace("{{LEADERBOARD_025_035}}", generateLeaderboard(0.25, 0.35));
+    html.replace("{{LEADERBOARD_045_055}}", generateLeaderboard(0.45, 0.55));
+    html.replace("{{LEADERBOARD_OTHER}}", generateLeaderboard(0, 1000000));
 
     server.send(200, "text/html", html);
 }
@@ -103,7 +91,7 @@ void addEntry(const String &name, int time, int quantity)
     File file = SPIFFS.open("/leaderboard.txt", FILE_APPEND);
     if (!file)
     {
-        Serial.println("Error opening file.");
+        Serial.println("Error opening leaderboard file.");
         return;
     }
     file.println(name + "," + String(time) + "," + String(quantity));

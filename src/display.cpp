@@ -1,6 +1,7 @@
 #include "display.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <vector>
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
@@ -32,6 +33,18 @@ void displayText(const String &text)
         display.display();
         lastText = text;
     }
+}
+
+void displayMultipleTexts(const std::vector<String> &texts)
+{
+    display.clearDisplay();
+    display.setTextSize(2);
+    for (size_t i = 0; i < texts.size(); ++i)
+    {
+        display.setCursor(0, i * 16);
+        display.print(texts[i]);
+    }
+    display.display();
 }
 
 void displayTimeResults(double time)
