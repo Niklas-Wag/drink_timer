@@ -38,9 +38,6 @@
    - Connect your ESP32 board to your computer.
    - Use PlatformIO to upload the code to the board.
 
-6. **Monitor the Serial Output:**
-   - Open the serial monitor in PlatformIO to view the output from the ESP32.
-
 ## Acknowledgements
 
 - [PlatformIO](https://platformio.org/)
