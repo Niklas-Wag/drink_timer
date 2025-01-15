@@ -10,4 +10,4 @@ void displayMultipleTexts(const std::vector<String> &texts);
 void displayTimeResults(double time);
 void displayVolumeResults(double volume);
 
-#endif // DISPLAY_H
+#endif

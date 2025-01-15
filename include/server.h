@@ -7,4 +7,4 @@ void setupServer();
 void serverHandleClient();
 void addEntry(const String &name, int time, int quantity);
 
-#endif // SERVER_H
+#endif

@@ -3,4 +3,4 @@
 
 void gameLoop();
 
-#endif // GAME_H
+#endif
