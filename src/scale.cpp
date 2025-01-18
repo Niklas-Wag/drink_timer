@@ -10,7 +10,7 @@ HX711 scale;
 void setupScale()
 {
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-    scale.set_scale(-706.9184549);
+    scale.set_scale(-706.4440994);
     scale.tare();
 }
 

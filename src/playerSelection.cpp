@@ -10,7 +10,7 @@
 
 RotaryEncoder encoder(CLK_PIN, DT_PIN, RotaryEncoder::LatchMode::FOUR3);
 
-const char *names[] = {"Guest", "Julia", "Niklas", "Xaver"};
+const char *names[] = {"Guest", "Julia", "Niklas", "Xaver", "Dominik", "Schauli", "Mike", "Annika", "Jonas"};
 const int namesCount = sizeof(names) / sizeof(names[0]);
 int currentIndex = 0;
 
