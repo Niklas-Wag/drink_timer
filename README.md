@@ -17,8 +17,8 @@
 
 
 ### HX711 Load Cell Amplifier
-  - **DT:** GPIO 4
-  - **SCK:** GPIO 16
+  - **DT:** GPIO 16
+  - **SCK:** GPIO 17
 
 ## Setup Instructions
 
