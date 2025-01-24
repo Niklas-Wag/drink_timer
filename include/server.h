@@ -5,6 +5,6 @@
 
 void setupServer();
 void serverHandleClient();
-void addEntry(const String &name, int time, int quantity);
+int addEntry(const String &name, int time, int quantity);
 
 #endif

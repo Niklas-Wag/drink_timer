@@ -27,7 +27,7 @@ void displayText(const String &text)
     if (text != lastText)
     {
         display.clearDisplay();
-        display.setTextSize(2);
+        display.setTextSize(3);
         display.setCursor(0, 0);
         display.print(text);
         display.display();
@@ -38,10 +38,10 @@ void displayText(const String &text)
 void displayMultipleTexts(const std::vector<String> &texts)
 {
     display.clearDisplay();
-    display.setTextSize(2);
+    display.setTextSize(3);
     for (size_t i = 0; i < texts.size(); ++i)
     {
-        display.setCursor(0, i * 16);
+        display.setCursor(0, i * 32);
         display.print(texts[i]);
     }
     display.display();
@@ -50,7 +50,7 @@ void displayMultipleTexts(const std::vector<String> &texts)
 void displayTimeResults(double time)
 {
     display.clearDisplay();
-    display.setTextSize(2);
+    display.setTextSize(3);
     display.setCursor(0, 0);
     display.print(time, 1);
     display.print("s ");
@@ -59,7 +59,7 @@ void displayTimeResults(double time)
 
 void displayVolumeResults(double volume)
 {
-    display.setCursor(0, 16);
+    display.setCursor(0, 32);
     display.print(volume, 2);
     display.print("l");
     display.display();

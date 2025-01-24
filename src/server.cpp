@@ -4,22 +4,32 @@
 
 WebServer server(80);
 
-String generateLeaderboard(double minL, double maxL)
+struct Entry
 {
-    File file = SPIFFS.open("/leaderboard.txt", FILE_READ);
+    String name;
+    double liters;
+    double time;
+    float lPerS;
+};
+
+String getFilename(double liters)
+{
+    if (liters >= 0.25 && liters <= 0.35)
+        return "/leaderboard_025_035.txt";
+    else if (liters >= 0.45 && liters <= 0.6)
+        return "/leaderboard_045_060.txt";
+    else
+        return "/leaderboard_other.txt";
+}
+
+String generateLeaderboard(const String &filename)
+{
+    File file = SPIFFS.open(filename, FILE_READ);
     if (!file)
     {
         Serial.println("Error opening leaderboard file.");
         return "<p>Error loading leaderboard.</p>";
     }
-
-    struct Entry
-    {
-        String name;
-        double liters;
-        double time;
-        float lPerS;
-    };
 
     std::vector<Entry> entries;
 
@@ -40,7 +50,7 @@ String generateLeaderboard(double minL, double maxL)
         double seconds = line.substring(comma1 + 1, comma2).toDouble() / 1000.0;
         double liters = line.substring(comma2 + 1).toDouble() / 1000.0;
 
-        if (liters >= minL && liters <= maxL && seconds > 0)
+        if (seconds > 0)
         {
             float lPerS = (float)liters / seconds;
             entries.push_back({name, liters, seconds, lPerS});
@@ -79,23 +89,68 @@ void handleRoot()
     String html = file.readString();
     file.close();
 
-    html.replace("{{LEADERBOARD_025_035}}", generateLeaderboard(0.25, 0.35));
-    html.replace("{{LEADERBOARD_045_055}}", generateLeaderboard(0.45, 0.55));
-    html.replace("{{LEADERBOARD_OTHER}}", generateLeaderboard(0, 1000000));
+    html.replace("{{LEADERBOARD_025_035}}", generateLeaderboard("/leaderboard_025_035.txt"));
+    html.replace("{{LEADERBOARD_045_055}}", generateLeaderboard("/leaderboard_045_060.txt"));
+    html.replace("{{LEADERBOARD_OTHER}}", generateLeaderboard("/leaderboard_other.txt"));
 
     server.send(200, "text/html", html);
 }
 
-void addEntry(const String &name, int time, int quantity)
+int addEntry(const String &name, int time, int quantity)
 {
-    File file = SPIFFS.open("/leaderboard.txt", FILE_APPEND);
+    double liters = quantity / 1000.0;
+    double seconds = time / 1000.0;
+    if (seconds <= 0)
+        return -1;
+
+    String filename = getFilename(liters);
+    File file = SPIFFS.open(filename, FILE_APPEND);
     if (!file)
     {
         Serial.println("Error opening leaderboard file.");
-        return;
+        return -1;
     }
+
     file.println(name + "," + String(time) + "," + String(quantity));
     file.close();
+
+    file = SPIFFS.open(filename, FILE_READ);
+    if (!file)
+        return -1;
+
+    std::vector<Entry> entries;
+    while (file.available())
+    {
+        String line = file.readStringUntil('\n');
+        line.trim();
+        if (line.length() == 0)
+            continue;
+
+        int comma1 = line.indexOf(',');
+        int comma2 = line.indexOf(',', comma1 + 1);
+
+        if (comma1 == -1 || comma2 == -1)
+            continue;
+
+        String entryName = line.substring(0, comma1);
+        double entrySeconds = line.substring(comma1 + 1, comma2).toDouble() / 1000.0;
+        double entryLiters = line.substring(comma2 + 1).toDouble() / 1000.0;
+
+        float lPerS = (float)entryLiters / entrySeconds;
+        entries.push_back({entryName, entryLiters, entrySeconds, lPerS});
+    }
+    file.close();
+
+    std::sort(entries.begin(), entries.end(), [](const Entry &a, const Entry &b)
+              { return a.lPerS > b.lPerS; });
+
+    for (int i = 0; i < entries.size(); i++)
+    {
+        if (entries[i].name == name && entries[i].liters == liters && entries[i].time == seconds)
+            return i + 1;
+    }
+
+    return -1;
 }
 
 void setupServer()

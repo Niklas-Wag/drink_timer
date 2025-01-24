@@ -2,7 +2,9 @@
 #include "display.h"
 #include "scale.h"
 #include "server.h"
+#include <RotaryEncoder.h>
 #include "playerSelection.h"
+#include <list>
 
 enum GameState
 {
@@ -20,6 +22,11 @@ unsigned long startTime = 0;
 unsigned long timer = 0;
 String player = "";
 
+int currentIdx = 0;
+#define CLK_PIN 19
+#define DT_PIN 18
+String screens[3][2];
+
 void gameLoop()
 {
     double weight = getWeight();
@@ -30,12 +37,12 @@ void gameLoop()
         currentState = WAIT_FOR_GLASS;
         break;
     case WAIT_FOR_GLASS:
-        displayText("Place your glass...");
+        displayMultipleTexts({"Place", "glass!"});
         initialWeight = waitForStableWeight();
         currentState = WAIT_FOR_DRINKING;
         break;
     case WAIT_FOR_DRINKING:
-        displayText("Start drinking...");
+        displayText("Drink!");
         if (weight < initialWeight - 50)
         {
             startTime = millis();
@@ -53,14 +60,57 @@ void gameLoop()
     case SHOW_RESULTS:
         if (drunkWeight == -1)
         {
-            displayTimeResults(timer / 1000.0);
+            String rank = "N/A";
+            displayText(String(timer / 1000.0, 2) + " s");
             drunkWeight = initialWeight - waitForStableWeight();
-            displayVolumeResults(drunkWeight / 1000.0);
+            if (drunkWeight < 0)
+            {
+                drunkWeight = 0;
+            }
+            displayMultipleTexts({String(timer / 1000.0, 2) + " s", String(drunkWeight / 1000.0, 2) + " l"});
             if (drunkWeight > 5 && player != "Guest")
             {
-                addEntry(player, timer, drunkWeight);
+                rank = String(addEntry(player, timer, drunkWeight));
+            }
+
+            screens[0][0] = String(timer / 1000.0, 2) + " s";
+            screens[0][1] = String(drunkWeight / 1000.0, 2) + " l";
+
+            String category = "N/A";
+            if (0.25 <= drunkWeight && drunkWeight <= 0.35)
+            {
+                category = "Seidl";
+            }
+            else if (0.45 <= drunkWeight && drunkWeight <= 0.6)
+            {
+                category = "Hoibe";
+            }
+            else
+            {
+                category = "Other";
+            }
+
+            screens[1][0] = category + ":";
+            screens[1][1] = String(rank) + ".";
+
+            screens[2][0] = "l/s:";
+            screens[2][1] = String(drunkWeight / timer, 2);
+
+            encoder.setPosition(0);
+        }
+
+        while (true)
+        {
+            serverHandleClient();
+            encoder.tick();
+            int newPosition = abs(encoder.getPosition() % 3);
+            if (newPosition != currentIdx)
+            {
+                currentIdx = newPosition;
+                displayMultipleTexts({screens[currentIdx][0], screens[currentIdx][1]});
             }
         }
+
         if (weight < 50)
         {
             currentState = CHOOSE_PLAYER;
