@@ -3,7 +3,7 @@
 #include "scale.h"
 #include "server.h"
 #include "game.h"
-#include "playerSelection.h"
+#include "rotaryEncoderFunctions.h"
 
 void setup()
 {
@@ -17,6 +17,5 @@ void setup()
 
 void loop()
 {
-  serverHandleClient();
   gameLoop();
 }

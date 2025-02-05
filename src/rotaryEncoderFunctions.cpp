@@ -1,5 +1,5 @@
 #include <RotaryEncoder.h>
-#include "playerSelection.h"
+#include "rotaryEncoderFunctions.h"
 #include "server.h"
 #include "display.h"
 

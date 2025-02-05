@@ -10,13 +10,14 @@ HX711 scale;
 void setupScale()
 {
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-    scale.set_scale(-706.4440994);
+    scale.set_scale(-706.2438017);
+    delay(500);
     scale.tare();
 }
 
 double getWeight()
 {
-    double weight = scale.get_units(5);
+    double weight = scale.get_units(1);
     return (weight < 0) ? 0 : weight;
 }
 
@@ -29,14 +30,11 @@ double waitForStableWeight(unsigned long timeout, double stabilityThreshold)
 
     while (true)
     {
-        // quick hack to keep the server running
-        serverHandleClient();
-
         weight = getWeight();
         if (abs(weight - previousWeight) <= stabilityThreshold && weight > 20)
         {
             stableCount++;
-            if (stableCount >= 3)
+            if (stableCount >= 15)
             {
                 return weight;
             }

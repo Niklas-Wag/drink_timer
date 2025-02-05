@@ -3,7 +3,7 @@
 #include "scale.h"
 #include "server.h"
 #include <RotaryEncoder.h>
-#include "playerSelection.h"
+#include "rotaryEncoderFunctions.h"
 #include <list>
 
 enum GameState
@@ -20,9 +20,11 @@ float initialWeight = 0;
 float drunkWeight = -1;
 unsigned long startTime = 0;
 unsigned long timer = 0;
+unsigned long resultStartTime = 0;
 String player = "";
 
 int currentIdx = 0;
+bool firstView = true;
 #define CLK_PIN 19
 #define DT_PIN 18
 String screens[3][2];
@@ -63,18 +65,19 @@ void gameLoop()
             String rank = "N/A";
             displayText(String(timer / 1000.0, 2) + " s");
             drunkWeight = initialWeight - waitForStableWeight();
+            displayMultipleTexts({String(timer / 1000.0, 2) + " s", String(drunkWeight / 1000.0, 2) + " l"});
             if (drunkWeight < 0)
             {
                 drunkWeight = 0;
             }
-            displayMultipleTexts({String(timer / 1000.0, 2) + " s", String(drunkWeight / 1000.0, 2) + " l"});
+            
+            screens[0][0] = String(timer / 1000.0, 2) + " s";
+            screens[0][1] = String(drunkWeight / 1000.0, 2) + " l";
+            
             if (drunkWeight > 5 && player != "Guest")
             {
                 rank = String(addEntry(player, timer, drunkWeight));
             }
-
-            screens[0][0] = String(timer / 1000.0, 2) + " s";
-            screens[0][1] = String(drunkWeight / 1000.0, 2) + " l";
 
             String category = "N/A";
             if (0.25 <= drunkWeight && drunkWeight <= 0.35)
@@ -93,29 +96,25 @@ void gameLoop()
             screens[1][0] = category + ":";
             screens[1][1] = String(rank) + ".";
 
-            screens[2][0] = "l/s:";
-            screens[2][1] = String(drunkWeight / timer, 2);
-
-            encoder.setPosition(0);
+            firstView = false;
         }
 
-        while (true)
+        while (weight >= 50)
         {
             serverHandleClient();
-            encoder.tick();
-            int newPosition = abs(encoder.getPosition() % 3);
-            if (newPosition != currentIdx)
+            weight = getWeight();
+            unsigned long elapsed = millis() - resultStartTime;
+            
+            if (elapsed > 2000) // Switch every 2 seconds
             {
-                currentIdx = newPosition;
-                displayMultipleTexts({screens[currentIdx][0], screens[currentIdx][1]});
+                firstView = !firstView;
+                resultStartTime = millis();
+                displayMultipleTexts({screens[firstView ? 0 : 1][0], screens[firstView ? 0 : 1][1]});
             }
         }
 
-        if (weight < 50)
-        {
-            currentState = CHOOSE_PLAYER;
-            drunkWeight = -1;
-        }
+        currentState = CHOOSE_PLAYER;
+        drunkWeight = -1;
         break;
     }
 }
