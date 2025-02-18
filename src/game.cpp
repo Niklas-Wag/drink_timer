@@ -49,6 +49,10 @@ void gameLoop()
         {
             startTime = millis();
             currentState = DRINKING;
+            while (weight >= 50)
+            {
+                weight = getWeight();
+            }
         }
         break;
     case DRINKING:
@@ -63,15 +67,15 @@ void gameLoop()
         if (drunkWeight == -1)
         {
             String rank = "N/A";
-            displayText(String(timer / 1000.0, 2) + " s");
+            String roundedTime = String(round((timer / 1000.0) * 10) / 10, 1) + " s";
+            displayText(roundedTime);
             drunkWeight = initialWeight - waitForStableWeight();
-            displayMultipleTexts({String(timer / 1000.0, 2) + " s", String(drunkWeight / 1000.0, 2) + " l"});
             if (drunkWeight < 0)
             {
                 drunkWeight = 0;
             }
             
-            screens[0][0] = String(timer / 1000.0, 2) + " s";
+            screens[0][0] = roundedTime;
             screens[0][1] = String(drunkWeight / 1000.0, 2) + " l";
             
             if (drunkWeight > 5 && player != "Guest")

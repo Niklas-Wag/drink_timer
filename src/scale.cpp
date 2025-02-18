@@ -21,16 +21,14 @@ double getWeight()
     return (weight < 0) ? 0 : weight;
 }
 
-double waitForStableWeight(unsigned long timeout, double stabilityThreshold)
+double waitForStableWeight(double stabilityThreshold)
 {
-    unsigned long startTime = millis();
-    double weight = getWeight();
-    double previousWeight = weight;
+    double previousWeight = getWeight();
     int stableCount = 0;
 
     while (true)
     {
-        weight = getWeight();
+        double weight = getWeight();
         if (abs(weight - previousWeight) <= stabilityThreshold && weight > 20)
         {
             stableCount++;

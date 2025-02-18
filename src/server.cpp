@@ -1,8 +1,10 @@
 #include "server.h"
 #include <SPIFFS.h>
 #include <WebServer.h>
+#include <ArduinoJson.h>
 
 WebServer server(80);
+std::vector<String> names;
 
 struct Entry
 {
@@ -66,6 +68,7 @@ String generateLeaderboard(const String &filename)
     for (const auto &entry : entries)
     {
         tableRows += "<tr>";
+        tableRows += "<td>" + String(&entry - &entries[0] + 1) + "</td>";
         tableRows += "<td>" + entry.name + "</td>";
         tableRows += "<td>" + String(entry.liters) + "</td>";
         tableRows += "<td>" + String(entry.time) + "</td>";
@@ -92,6 +95,22 @@ void handleRoot()
     html.replace("{{LEADERBOARD_025_035}}", generateLeaderboard("/leaderboard_025_035.txt"));
     html.replace("{{LEADERBOARD_045_055}}", generateLeaderboard("/leaderboard_045_060.txt"));
     html.replace("{{LEADERBOARD_OTHER}}", generateLeaderboard("/leaderboard_other.txt"));
+
+    server.send(200, "text/html", html);
+}
+
+void handleNames()
+{
+    File file = SPIFFS.open("/namePage.html", FILE_READ);
+    if (!file)
+    {
+        Serial.println("Error opening namePage.html file.");
+        server.send(500, "text/plain", "Internal Server Error: Unable to load page.");
+        return;
+    }
+
+    String html = file.readString();
+    file.close();
 
     server.send(200, "text/html", html);
 }
@@ -153,10 +172,89 @@ int addEntry(const String &name, int time, int quantity)
     return -1;
 }
 
+void loadNamesFromFile()
+{
+    names.clear();
+    File file = SPIFFS.open("/names.txt", "r");
+    if (!file)
+    {
+        Serial.println("Failed to open names file");
+        return;
+    }
+    while (file.available())
+    {
+        names.push_back(file.readStringUntil('\n'));
+    }
+    file.close();
+}
+
+void saveNamesToFile()
+{
+    File file = SPIFFS.open("/names.txt", "w");
+    if (!file)
+    {
+        Serial.println("Failed to open names file for writing");
+        return;
+    }
+    for (const auto &name : names)
+    {
+        file.println(name);
+    }
+    file.close();
+}
+
+void handleGetNames()
+{
+    JsonDocument jsonDoc;
+    JsonArray jsonArray = jsonDoc.to<JsonArray>();
+    for (const String &name : names)
+    {
+        jsonArray.add(name);
+    }
+    String jsonString;
+    serializeJson(jsonDoc, jsonString);
+    server.send(200, "application/json", jsonString);
+}
+
+void handleAddName()
+{
+    if (server.hasArg("plain"))
+    {
+        String newName = server.arg("plain");
+        names.push_back(newName);
+        saveNamesToFile();
+        server.send(200, "text/plain", "Name added");
+    }
+}
+
+void handleRemoveName()
+{
+    if (server.hasArg("index"))
+    {
+        int index = server.arg("index").toInt();
+        if (index >= 0 && index < names.size())
+        {
+            names.erase(names.begin() + index);
+            saveNamesToFile();
+            server.send(200, "text/plain", "Name removed");
+        }
+        else
+        {
+            server.send(400, "text/plain", "Invalid index");
+        }
+    }
+}
+
 void setupServer()
 {
     WiFi.softAP("ESP32", "12345678");
     server.on("/", handleRoot);
+    server.on("/names", handleNames);
+
+    server.on("/getNames", HTTP_GET, handleGetNames);
+    server.on("/addName", HTTP_POST, handleAddName);
+    server.on("/removeName", HTTP_DELETE, handleRemoveName);
+
     IPAddress IP = WiFi.softAPIP();
     Serial.print("AP IP address: ");
     Serial.println(IP);
@@ -167,6 +265,8 @@ void setupServer()
         Serial.println("SPIFFS Mount Failed");
         return;
     }
+
+    loadNamesFromFile();
 }
 
 void serverHandleClient()

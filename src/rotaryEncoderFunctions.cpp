@@ -2,6 +2,9 @@
 #include "rotaryEncoderFunctions.h"
 #include "server.h"
 #include "display.h"
+#include "server.h"
+#include <vector>
+#include <string>
 
 #define CLK_PIN 19
 #define DT_PIN 18
@@ -10,8 +13,6 @@
 
 RotaryEncoder encoder(CLK_PIN, DT_PIN, RotaryEncoder::LatchMode::FOUR3);
 
-const char *names[] = {"Guest", "Julia", "Niklas", "Xaver", "Dominik", "Schauli", "Mike", "Annika", "Jonas"};
-const int namesCount = sizeof(names) / sizeof(names[0]);
 int currentIndex = 0;
 
 void displayCurrentName()
@@ -43,10 +44,10 @@ String getPlayer()
             currentIndex = newPosition;
             if (currentIndex < 0)
             {
-                currentIndex = namesCount - 1;
+                currentIndex = names.size() - 1; // Use names.size() instead of namesCount
                 encoder.setPosition(currentIndex);
             }
-            else if (currentIndex >= namesCount)
+            else if (currentIndex >= names.size()) // Use names.size() instead of namesCount
             {
                 currentIndex = 0;
                 encoder.setPosition(currentIndex);
@@ -67,7 +68,7 @@ String getPlayer()
                 buttonState = reading;
                 if (buttonState == LOW)
                 {
-                    return names[currentIndex];
+                    return names[currentIndex]; // Return the selected name as a std::string
                 }
             }
         }

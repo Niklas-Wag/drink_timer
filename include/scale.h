@@ -5,6 +5,6 @@
 
 void setupScale();
 double getWeight();
-double waitForStableWeight(unsigned long timeout = 5000, double stabilityThreshold = 5.0);
+double waitForStableWeight(double stabilityThreshold = 5.0);
 
 #endif

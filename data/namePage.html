@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Names</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #nameList { margin-top: 20px; }
+        .nameItem { display: flex; justify-content: space-between; margin: 5px 0; }
+        button { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Manage Player Names</h2>
+    <input type="text" id="nameInput" placeholder="Enter a name">
+    <button onclick="addName()">Add Name</button>
+    <div id="nameList"></div>
+
+    <script>
+        async function fetchNames() {
+            const response = await fetch('/getNames');
+            const names = await response.json();
+            const nameList = document.getElementById('nameList');
+            nameList.innerHTML = '';
+            names.forEach((name, index) => {
+                const div = document.createElement('div');
+                div.className = 'nameItem';
+                div.innerHTML = `${name} <button onclick="removeName(${index})">Remove</button>`;
+                nameList.appendChild(div);
+            });
+        }
+
+        async function addName() {
+            const name = document.getElementById('nameInput').value;
+            if (name) {
+                await fetch('/addName', { method: 'POST', body: name });
+                document.getElementById('nameInput').value = '';
+                fetchNames();
+            }
+        }
+
+        async function removeName(index) {
+            await fetch(`/removeName?index=${index}`, { method: 'DELETE' });
+            fetchNames();
+        }
+
+        fetchNames();
+    </script>
+</body>
+</html>
